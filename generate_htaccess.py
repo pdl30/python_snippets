@@ -20,9 +20,9 @@ def generate_htaccess(path, user, password):
 	subprocess.call(command.split())
 
 if __name__ == "__main__":
-	parser = argparse.ArgumentParser(description='Generates htaccess\n')
-	parser.add_argument('-user', help='username', required=True)
-	parser.add_argument('-pass', help='password', required=True)
+	parser = argparse.ArgumentParser(description='Generates htaccess forms for website protection.\n')
+	parser.add_argument('-u', '--user', help='username', required=True)
+	parser.add_argument('-p', '--pass', help='password', required=True)
 	args = vars(parser.parse_args())
 	path = os.getcwd()
 	generate_htaccess(path, args["user"], args["pass"])

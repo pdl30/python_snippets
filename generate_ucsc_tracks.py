@@ -38,9 +38,9 @@ def generate_tracks(path, user, password):
 
 
 if __name__ == "__main__":
-	parser = argparse.ArgumentParser(description='Generates UCSC tracks\n')
-	parser.add_argument('-path', help='Optional path to directory', required=False)
-	parser.add_argument('-user', help='Optional username', required=False)
-	parser.add_argument('-pass', help='Optional password', required=False)
+	parser = argparse.ArgumentParser(description='Generates UCSC tracks by reading all bigBig and bigWig files in a directory and creates a link for vizualisation on UCSC\n')
+	parser.add_argument('-p', '--path', help='Optional path to directory', required=False)
+	parser.add_argument('-u', '--user', help='Optional username', required=False)
+	parser.add_argument('-a', '--pass', help='Optional password', required=False)
 	args = vars(parser.parse_args())
 	generate_tracks(args["path"], args["user"], args["pass"])
