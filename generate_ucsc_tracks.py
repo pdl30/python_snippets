@@ -42,5 +42,8 @@ if __name__ == "__main__":
 	parser.add_argument('-p', '--path', help='Optional path to directory', required=False)
 	parser.add_argument('-u', '--user', help='Optional username', required=False)
 	parser.add_argument('-a', '--pass', help='Optional password', required=False)
+	if len(sys.argv)==1:
+		parser.print_help()
+		sys.exit(1)
 	args = vars(parser.parse_args())
 	generate_tracks(args["path"], args["user"], args["pass"])
