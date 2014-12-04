@@ -13,7 +13,7 @@ import subprocess
 import os, re, sys
 from os.path import isfile, join
 
-def generate_tracks(path, user, password):
+def generate_tracks(path, user, password, genome):
 	if path == None:
 			path = os.getcwd()
 	link = re.sub("/raid", "", path)
@@ -33,7 +33,10 @@ def generate_tracks(path, user, password):
 				link, f))
 	output.close()
 	output = open("links.txt", "w")
-	output.write("http://genome-euro.ucsc.edu/cgi-bin/hgTracks?org=mouse&hgt.customText={}/tracks.txt&db=mm10\n".format(link))
+	if genome == "mm10":
+		output.write("http://genome-euro.ucsc.edu/cgi-bin/hgTracks?org=mouse&hgt.customText={}/tracks.txt&db=mm10\n".format(link))
+	elif genome == "hg19":
+		output.write("http://genome-euro.ucsc.edu/cgi-bin/hgTracks?org=human&hgt.customText={}/tracks.txt&db=hg19\n".format(link))
 	output.close()
 
 
@@ -42,8 +45,6 @@ if __name__ == "__main__":
 	parser.add_argument('-p', '--path', help='Optional path to directory', required=False)
 	parser.add_argument('-u', '--user', help='Optional username', required=False)
 	parser.add_argument('-a', '--pass', help='Optional password', required=False)
-	if len(sys.argv)==1:
-		parser.print_help()
-		sys.exit(1)
+	parser.add_argument('-g', '--genome', help='Default=mm10, hg19 available', default="mm10", required=False)
 	args = vars(parser.parse_args())
-	generate_tracks(args["path"], args["user"], args["pass"])
+	generate_tracks(args["path"], args["user"], args["pass"], args["genome"])
