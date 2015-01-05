@@ -38,7 +38,7 @@ def generate_tracks(path, user, password, genome):
 	elif genome == "hg19":
 		output.write("http://genome-euro.ucsc.edu/cgi-bin/hgTracks?org=human&hgt.customText={}/tracks.txt&db=hg19\n".format(link))
 	elif genome == "mm9":
-		output.write("http://genome-euro.ucsc.edu/cgi-bin/hgTracks?org=human&hgt.customText={}/tracks.txt&db=mm9\n".format(link))
+		output.write("http://genome-euro.ucsc.edu/cgi-bin/hgTracks?org=mouse&hgt.customText={}/tracks.txt&db=mm9\n".format(link))
 	output.close()
 
 
