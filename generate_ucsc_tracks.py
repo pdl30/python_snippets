@@ -37,6 +37,8 @@ def generate_tracks(path, user, password, genome):
 		output.write("http://genome-euro.ucsc.edu/cgi-bin/hgTracks?org=mouse&hgt.customText={}/tracks.txt&db=mm10\n".format(link))
 	elif genome == "hg19":
 		output.write("http://genome-euro.ucsc.edu/cgi-bin/hgTracks?org=human&hgt.customText={}/tracks.txt&db=hg19\n".format(link))
+	elif genome == "mm9":
+		output.write("http://genome-euro.ucsc.edu/cgi-bin/hgTracks?org=human&hgt.customText={}/tracks.txt&db=mm9\n".format(link))
 	output.close()
 
 
@@ -45,6 +47,6 @@ if __name__ == "__main__":
 	parser.add_argument('-p', '--path', help='Optional path to directory', required=False)
 	parser.add_argument('-u', '--user', help='Optional username', required=False)
 	parser.add_argument('-a', '--pass', help='Optional password', required=False)
-	parser.add_argument('-g', '--genome', help='Default=mm10, hg19 available', default="mm10", required=False)
+	parser.add_argument('-g', '--genome', help='Default=mm10, hg19 and mm9 available', default="mm10", required=False)
 	args = vars(parser.parse_args())
 	generate_tracks(args["path"], args["user"], args["pass"], args["genome"])
