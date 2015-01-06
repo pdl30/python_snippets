@@ -16,7 +16,7 @@ import ConfigParser
 import itertools
 
 def sam_to_bam(sam):
-	name = sam.rstrip("$.sam")
+	name = sam.rstrip(".sam$")
 	print name
 	command1 = "samtools view -bS {} > {}.bam".format(sam, name)
 	command2 = "samtools sort {0}.bam {0}_sort".format(name)
