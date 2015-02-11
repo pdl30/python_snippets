@@ -27,7 +27,7 @@ def annotate_ensembl(dict_obj):
 	genome="mmusculus_gene_ensembl"
 	ensembl = ro.r.useDataset(genome, mart=ensembl)
 	values = []
-	for key1 in dict_obj.keys():
+	for key1 in dict_obj:
 		values.append(key1)
 	C1BM = ro.r.getBM(attributes=StrVector(["ensembl_gene_id", "chromosome_name", "start_position", "end_position", "strand", "external_gene_name", "description", "gene_biotype"]), 
 		filters="ensembl_gene_id", values=values, mart=ensembl)
@@ -47,11 +47,14 @@ def annotate_ensembl(dict_obj):
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Annotate ensembl count matrices\n')
-	parser.add_argument('-m','--MATRIX', help='Counts Matrix', required=True)
-	parser.add_argument('-o','--Outfile', help='Output name', required=True)
+	parser.add_argument('-i','--input', help='Counts Matrix', required=True)
+	parser.add_argument('-o','--output', help='Output name', required=True)
+	if len(sys.argv)==1:
+		parser.print_help()
+		sys.exit(1)
 	args = vars(parser.parse_args())
 	idata = {}
-	with open(args["MATRIX"]) as f:
+	with open(args["input"]) as f:
 		header = next(f)
 		for line in f:
 			line = line.rstrip()
@@ -65,7 +68,7 @@ if __name__ == "__main__":
 			else:
 				idata[ens] = line
 	results = annotate_ensembl(idata)
-	output = open(args["Outfile"], "w")
+	output = open(args["output"], "w")
 	header= header.rstrip()
 	output.write("{}\tGene Name\tDescription\tBiotype\n".format(header)),
 	for key in sorted(idata):
