@@ -33,6 +33,10 @@ def create_dirs(idir):
 		pass
 	else:
 		os.mkdir(idir + "/logs")
+	if os.path.isdir(idir+ "/raw_data"):
+		pass
+	else:
+		os.mkdir(idir + "/raw_data")
 
 def get_r_packages(idir):
 	rscript = " y <- installed.packages()\n"
