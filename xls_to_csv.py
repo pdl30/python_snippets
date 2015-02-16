@@ -1,3 +1,13 @@
+#!/usr/bin/python
+
+########################################################################
+# 12 Jan 2015
+# Patrick Lombard, Centre for Stem Stem Research
+# Core Bioinformatics Group
+# University of Cambridge
+# All right reserved.
+########################################################################
+
 import argparse
 import csv, re, os
 import xlrd
@@ -13,7 +23,7 @@ def csv_from_excel(ifile):
 	your_csv_file.close()
 
 if __name__ == "__main__":
-	parser = argparse.ArgumentParser(description='Convert tsv to xls\n')
-	parser.add_argument('-i','--input', help='Input', required=True)
+	parser = argparse.ArgumentParser(description='Convert xls to csv\n')
+	parser.add_argument('-i','--input', help='Input XLS file', required=True)
 	args = vars(parser.parse_args())
 	csv_from_excel(args["input"])

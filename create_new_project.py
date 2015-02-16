@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 ########################################################################
-# 31 Oct 2014
+# 11 Jan 2015
 # Patrick Lombard, Centre for Stem Stem Research
 # Core Bioinformatics Group
 # University of Cambridge
