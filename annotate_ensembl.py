@@ -44,12 +44,7 @@ def annotate_ensembl(dict_obj):
 		data[g] = (chr1[index], tss[index], end[index], st[index], name[index], des[index], bio[index])
 	return data
 
-def reverse_dict(idict):
-	inv_map = {}
-	for k, v in idict.iteritems():
-		inv_map[v] = inv_map.get(v, [])
-		inv_map[v].append(k)
-	return inv_map
+
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Annotate ensembl count matrices\n')
