@@ -11,6 +11,7 @@
 import subprocess
 import sys, re, os
 import argparse
+from sh import touch
 
 def create_dirs(idir):
 	if os.path.isdir(idir):
@@ -29,6 +30,11 @@ def create_dirs(idir):
 		pass
 	else:
 		os.mkdir(idir + "/results")
+	if os.path.isdir(idir+ "/scripts"):
+		pass
+	else:
+		os.mkdir(idir + "/scripts")
+	touch("{}/scripts/main.py")
 	if os.path.isdir(idir+ "/logs"):
 		pass
 	else:
