@@ -12,6 +12,7 @@ import subprocess
 import sys, re, os
 import argparse
 from sh import touch
+import datetime
 
 def create_dirs(idir):
 	if os.path.isdir(idir):
@@ -34,7 +35,23 @@ def create_dirs(idir):
 		pass
 	else:
 		os.mkdir(idir + "/scripts")
-	touch("{}/scripts/main.py")
+	output = open("{}/scripts/main.py".format(idir), "w")
+	output.write("""#!/usr/bin/python
+
+########################################################################
+# {}
+# Patrick Lombard, Centre for Stem Stem Research
+# Core Bioinformatics Group
+# University of Cambridge
+# All right reserved.
+########################################################################
+
+import subprocess
+import sys, re, os
+import argparse
+
+base_dir = "{}")\n""".format(datetime.date.today(), os.path.abspath(idir)))
+	output.close()
 	if os.path.isdir(idir+ "/logs"):
 		pass
 	else:
