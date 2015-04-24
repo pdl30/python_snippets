@@ -69,7 +69,7 @@ def main():
 	parser.add_argument('-t', help='Converts counts to TPM', action="store_true", required=False)
 	parser.add_argument('-r', help='Converts counts to RPKM',  action="store_true", required=False)
 	parser.add_argument('-d', help='Converts counts to DESEQ2 normalised counts',  action="store_true", required=False)
-	parser.add_argument('-o','--output', help='Output file for Spreadsheet input', required=True)
+	parser.add_argument('-o','--output', help='Output file', required=True)
 	if len(sys.argv)==1:
 		parser.print_help()
 		sys.exit(1)
