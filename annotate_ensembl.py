@@ -21,10 +21,13 @@ from rpy2.robjects.vectors import IntVector, FloatVector, StrVector
 from collections import defaultdict
 
 
-def annotate_ensembl(dict_obj):
+def annotate_ensembl(dict_obj, g):
 	ens = importr("biomaRt")
 	ensembl = ro.r.useMart("ensembl")
-	genome="mmusculus_gene_ensembl"
+	if g == "mm10":
+		genome="mmusculus_gene_ensembl"
+	elif g == "hg19":
+		genome = "hsapiens_gene_ensembl"
 	ensembl = ro.r.useDataset(genome, mart=ensembl)
 	values = []
 	for key1 in dict_obj:
@@ -45,10 +48,10 @@ def annotate_ensembl(dict_obj):
 	return data
 
 
-
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Annotate ensembl count matrices\n')
 	parser.add_argument('-i','--input', help='Counts Matrix', required=True)
+	parser.add_argument('-g','--genome', help='Options are mm10/hg19, mm10 is default', default="mm10", required=True)
 	parser.add_argument('-o','--output', help='Output name', required=True)
 	if len(sys.argv)==1:
 		parser.print_help()
@@ -68,7 +71,7 @@ if __name__ == "__main__":
 				pass
 			else:
 				idata[ens] = line
-	results = annotate_ensembl(idata)
+	results = annotate_ensembl(idata, args["genome"])
 	output = open(args["output"], "w")
 	header= header.rstrip()
 	output.write("{}\tGene Name\tDescription\tBiotype\n".format(header)),
