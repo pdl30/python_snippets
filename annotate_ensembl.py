@@ -75,9 +75,21 @@ if __name__ == "__main__":
 	output = open(args["output"], "w")
 	header= header.rstrip()
 	output.write("{}\tGene Name\tDescription\tBiotype\n".format(header)),
-	for key in sorted(idata):
-		anno = results.get(key, None)
-		if anno:
-			output.write("{}\t{}\t{}\t{}\n".format(idata[key], results[key][4], results[key][5],results[key][6])),
-		else:
-			output.write("{}\n".format(idata[key])),
+	with open(args["input"]) as f:
+		next(f)
+		for line in f:
+			line = line.rstrip()
+			word = line.split("\t")
+			ens = word[0].strip(" ")
+			m = re.match("__", ens)
+			if m:
+				pass
+			elif line.startswith("#"):
+				pass
+			else:
+				anno = results.get(ens, None)
+				if anno:
+					output.write("{}\t{}\t{}\t{}\n".format(line, results[ens][4], results[ens][5],results[ens][6])),
+				else:
+					output.write("{}\n".format(line)),
+	output.close()
