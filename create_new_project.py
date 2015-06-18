@@ -50,7 +50,12 @@ import subprocess
 import sys, re, os
 import argparse
 
-base_dir = "{}")\n""".format(datetime.date.today(), os.path.abspath(idir)))
+base_dir = "{}"
+raw_data = base_dir + '/raw_data'
+anal_dir = base_dir + '/analysis'
+align_dir = base_dir + '/alignment'
+scripts_dir = base_dir + '/scripts/'\n""".format(datetime.date.today(), os.path.abspath(idir)))
+	
 	output.close()
 	if os.path.isdir(idir+ "/logs"):
 		pass

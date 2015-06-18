@@ -10,6 +10,7 @@
 
 import os, re, sys
 import argparse
+from collections import defaultdict
 
 def read_dir(idir):
 	ifiles = [f for f in os.listdir(idir) if f.endswith(".count")]
@@ -58,11 +59,36 @@ def write(result, out):
 			output.write("{}\t{}\t{}\n".format(key, key2, result[key][key2]))
 	output.close()
 
+def join_counts(idir, output):
+	ifiles = [f for f in os.listdir(idir) if f.endswith(".count")]
+	data = defaultdict(list)
+	output = open(output, "w")
+	output.write("ID"),
+	for count in sorted(ifiles):
+		name = os.path.basename(count)
+		name= re.sub(".count$", "", name)
+		output.write("\t{}".format(name)),
+		with open(count) as f:
+			for line in f:
+				line = line.rstrip()
+				word = line.split("\t")
+				if word[0].startswith("__"):
+					pass
+				else:
+					data[word[0]].append(word[1])
+	output.write("\n"),
+	for key2 in sorted(data):
+		data2 = data[key2]
+		output.write(key2+"\t" + "\t".join(data2) + "\n"),
+	output.close()
+
 def main():
-	parser = argparse.ArgumentParser(description='Pyrnapipe is a pipeline for RNA-seq and ChIP-seq samples from the GEO database\n')
+	parser = argparse.ArgumentParser(description='Combines counts\n')
+
 	parser.add_argument('-i', '--idir', help='Input directory, files must end in .count', required=False)
-	parser.add_argument('-c', '--counts', help='Single counts file', required=False)
+	#parser.add_argument('-c', '--counts', help='Single counts file instead of input directory', required=False)
 	parser.add_argument('-o', '--output', help='Report file', required=True)
+	parser.add_argument('-c', '--combined', help='Combined counts file', required=True)
 	if len(sys.argv)==1:
 		parser.print_help()
 		sys.exit(1)
@@ -70,9 +96,8 @@ def main():
 
 	if args["idir"]:
 		result = read_dir(args["idir"])
-	elif args["counts"]:
-		result = read_ifile(args["counts"])
-	write(result, args["output"])
 
+	write(result, args["output"])
+	join_counts(args["idir"], args["combined"])
 
 main()
