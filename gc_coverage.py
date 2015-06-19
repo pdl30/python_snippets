@@ -59,7 +59,6 @@ def write_bed(genes, tss=False):
 		else:
 			g_file.write("{}\t{}\t{}\t{}\t0\t{}\n".format(genes[g][0], genes[g][1], genes[g][2], g, genes[g][3])),
 	g_file.close()
-	print g_file.name
 	return g_file.name
 
 def bedtofasta(g_file):
@@ -108,10 +107,10 @@ def read_fasta(fa_file, rev_genes, tss=False):
 	return result
 
 def separate_genes(gc_content, outdir):
-	output1 = open(outdir+'/1st_gc_genes.txt', "w")
-	output2 = open(outdir+'/2nd_gc_genes.txt', "w")
-	output3 = open(outdir+'/3rd_gc_genes.txt', "w")
-	output4 = open(outdir+'/4th_gc_genes.txt', "w")
+	output1 = tempfile.NamedTemporaryFile(delete = False)
+	output2 = tempfile.NamedTemporaryFile(delete = False)
+	output3 = tempfile.NamedTemporaryFile(delete = False)
+	output4 = tempfile.NamedTemporaryFile(delete = False)
 	gc_values = list(gc_content.values())
 	one = numpy.percentile(gc_values, 25)
 	two = numpy.percentile(gc_values, 50)
@@ -126,14 +125,19 @@ def separate_genes(gc_content, outdir):
 			output3.write("{}\n".format(key)),
 		else:
 			output4.write("{}\n".format(key)),
+	output1.close()
+	output2.close()
+	output3.close()
+	output4.close()
+	return output1.name, output2.name, output3.name, output4.name
 
-def run_ngs(conditions, outdir, tss=False):
+def run_ngs(conditions, output1, output2, output3, output4, outdir, tss=False):
 	for key in conditions:
 		config = open(outdir+'/{}_ngs_config.txt'.format(conditions[key]), "w")
-		config.write("{}\t{}/1st_gc_genes.txt\t'1st Quantile'\n".format(key, outdir)),
-		config.write("{}\t{}/2nd_gc_genes.txt\t'2nd Quantile'\n".format(key, outdir)),
-		config.write("{}\t{}/3rd_gc_genes.txt\t'3rd Quantile'\n".format(key, outdir)),
-		config.write("{}\t{}/4th_gc_genes.txt\t'4th Quantile'\n".format(key, outdir)),
+		config.write("{}\t{}\t'1st Quantile'\n".format(key, output1)),
+		config.write("{}\t{}\t'2nd Quantile'\n".format(key, output2)),
+		config.write("{}\t{}\t'3rd Quantile'\n".format(key, output3)),
+		config.write("{}\t{}\t'4th Quantile'\n".format(key, output4)),
 		config.close()
 		if tss:
 			command = "ngs.plot.r -C {}/{}_ngs_config.txt -G mm10 -O {}/{}_{}_tss -R tss -D ensembl -FL 300".format(outdir, conditions[key], outdir, conditions[key], date_format)
@@ -155,6 +159,14 @@ def ConfigSectionMap(Config, section):
 			dict1[option] = None
 	return dict1
 
+def cleanup(g_file, fa_file, output1, output2, output3, output4):
+	os.remove(fa_file)
+	os.remove(g_file)
+	os.remove(output1)
+	os.remove(output2)
+	os.remove(output3)
+	os.remove(output4)
+
 def main():
 	parser = argparse.ArgumentParser(description='Plots quantiles of genes/tss regions of bam files\n')
 	subparsers = parser.add_subparsers(help='Programs included',dest="subparser_name")
@@ -164,6 +176,9 @@ def main():
 	gene_parser = subparsers.add_parser('gene', help='Genebody plotter')
 	gene_parser.add_argument('-c', '--config', help='Contains [Conditions] with bam files as keys.', required=False)
 	gene_parser.add_argument('-o', '--outdir', help='Output directory', required=True)
+	peak_parser = subparsers.add_parser('peak', help='Peak plotter')
+	peak_parser.add_argument('-c', '--config', help='Contains [Conditions] with peak files as keys.', required=False)
+	peak_parser.add_argument('-o', '--outdir', help='Output directory', required=True)
 	if len(sys.argv)==1:
 		parser.print_help()
 		sys.exit(1)
@@ -179,16 +194,19 @@ def main():
 		g_file = write_bed(genes)
 		fa_file = bedtofasta(g_file)
 		gc_content = read_fasta(fa_file, rev_genes)
-		separate_genes(gc_content, args["outdir"])
-		run_ngs(conditions, args["outdir"])
-	if args["subparser_name"] == "tss":
+		output1, output2, output3, output4 = separate_genes(gc_content, args["outdir"])
+		run_ngs(conditions, output1, output2, output3, output4, args["outdir"])
+		#cleanup(g_file, fa_file, output1, output2, output3, output4)
+	elif args["subparser_name"] == "tss":
 		print "TSS GC analysis...\n"
 		genes = get_genes(tss=True)
 		rev_genes = reverse_dict(genes)
 		g_file = write_bed(genes, tss=True)
 		fa_file = bedtofasta(g_file)
 		gc_content = read_fasta(fa_file, rev_genes, tss=True)
-		separate_genes(gc_content, args["outdir"])
-		run_ngs(conditions, args["outdir"], tss=True)
-
+		output1, output2, output3, output4 = separate_genes(gc_content, args["outdir"])
+		run_ngs(conditions, output1, output2, output3, output4, args["outdir"], tss=True)
+		#cleanup(g_file, fa_file, output1, output2, output3, output4)
+	elif args["subparser_name"] == "peak":
+		print "TSS GC analysis...\n"
 main()
