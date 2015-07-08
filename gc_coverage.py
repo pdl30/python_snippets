@@ -17,6 +17,7 @@ import HTSeq
 import tempfile
 from datetime import date
 import ConfigParser
+import time
 
 today = date.today()
 date_format = "{}_{}_{}".format(today.day, today.month, today.year)
@@ -61,10 +62,13 @@ def write_bed(genes, tss=False):
 	g_file.close()
 	return g_file.name
 
-def bedtofasta(g_file):
+def bedtofasta(g_file, genome=None):
 	fa_file = tempfile.NamedTemporaryFile(delete = False)
 	fa_file.close()
-	command = "fastaFromBed -fi /home/patrick/Reference_Genomes/mm10/UCSC/Sequence/ucsc_mm10.fa -bed {} -fo {}".format(g_file, fa_file.name)
+	if genome == "hg19":
+		command = "fastaFromBed -fi /home/patrick/Reference_Genomes/hg19/UCSC/Chrom_fa/ucsc_hg19.fa -bed {} -fo {}".format(g_file, fa_file.name)
+	else:
+		command = "fastaFromBed -fi /home/patrick/Reference_Genomes/mm10/UCSC/Sequence/ucsc_mm10.fa -bed {} -fo {}".format(g_file, fa_file.name)
 	subprocess.call(command.split())
 	return fa_file.name
 
@@ -75,7 +79,7 @@ def reverse_dict(idict):
 		inv_map[v].append(k)
 	return inv_map
 
-def read_fasta(fa_file, rev_genes, tss=False):
+def read_fasta(fa_file, rev_genes=None, tss=False, peak=False):
 	result = {}
 	for s in HTSeq.FastaReader( fa_file ):
 		name = s.name.split(":")
@@ -86,6 +90,8 @@ def read_fasta(fa_file, rev_genes, tss=False):
 			if gene == None:
 				gene = rev_genes.get((name, int(pos[1]) - 2000, "-"), None)
 				s =  s.get_reverse_complement()
+		elif peak:
+			pass
 		else:
 			gene = rev_genes.get((name, pos[0], pos[1], "+"), None)
 			if gene == None:
@@ -103,10 +109,13 @@ def read_fasta(fa_file, rev_genes, tss=False):
 		else:
 			tot = GC+AT
 			res = float(GC)/tot
-			result[gene[0]] = res
+			if peak:
+				result[s.name] = res
+			else:
+				result[gene[0]] = res
 	return result
 
-def separate_genes(gc_content, outdir):
+def separate_genes(gc_content, outdir, peak=False):
 	output1 = tempfile.NamedTemporaryFile(delete = False)
 	output2 = tempfile.NamedTemporaryFile(delete = False)
 	output3 = tempfile.NamedTemporaryFile(delete = False)
@@ -116,35 +125,62 @@ def separate_genes(gc_content, outdir):
 	two = numpy.percentile(gc_values, 50)
 	three = numpy.percentile(gc_values, 75)
 	four = numpy.percentile(gc_values, 100)
-	for key in gc_content:
-		if float(gc_content[key]) < one:
-			output1.write("{}\n".format(key)),
-		elif float(gc_content[key]) < two:
-			output2.write("{}\n".format(key)),
-		elif float(gc_content[key]) < three:
-			output3.write("{}\n".format(key)),
-		else:
-			output4.write("{}\n".format(key)),
+	if peak:
+		c = 0
+		for key in gc_content:
+			name = key.split(":")
+			pos = name[1].split("-")
+			if float(gc_content[key]) < one:
+				output1.write("{}\t{}\t{}\t{}\t0\t+\n".format(name[0], pos[0], pos[1], c)),
+			elif float(gc_content[key]) < two:
+				output2.write("{}\t{}\t{}\t{}\t0\t+\n".format(name[0], pos[0], pos[1], c)),
+			elif float(gc_content[key]) < three:
+				output3.write("{}\t{}\t{}\t{}\t0\t+\n".format(name[0], pos[0], pos[1], c)),
+			else:
+				output4.write("{}\t{}\t{}\t{}\t0\t+\n".format(name[0], pos[0], pos[1], c)),
+			c += 1
+	else:
+		for key in gc_content:
+			if float(gc_content[key]) < one:
+				output1.write("{}\n".format(key)),
+			elif float(gc_content[key]) < two:
+				output2.write("{}\n".format(key)),
+			elif float(gc_content[key]) < three:
+				output3.write("{}\n".format(key)),
+			else:
+				output4.write("{}\n".format(key)),
 	output1.close()
 	output2.close()
 	output3.close()
 	output4.close()
 	return output1.name, output2.name, output3.name, output4.name
 
-def run_ngs(conditions, output1, output2, output3, output4, outdir, tss=False):
-	for key in conditions:
-		config = open(outdir+'/{}_ngs_config.txt'.format(conditions[key]), "w")
-		config.write("{}\t{}\t'1st Quantile'\n".format(key, output1)),
-		config.write("{}\t{}\t'2nd Quantile'\n".format(key, output2)),
-		config.write("{}\t{}\t'3rd Quantile'\n".format(key, output3)),
-		config.write("{}\t{}\t'4th Quantile'\n".format(key, output4)),
+def run_ngs(conditions, output1, output2, output3, output4, outdir, tss=False, peak=None, gene=False):
+	if peak:
+		bam_file = re.sub("_ucsc_q1e-0.01_400bp.bed", "_sort.bam", peak)
+		config = open(outdir+'/{}_ngs_config.txt'.format(conditions[peak]), "w")
+		config.write("{}\t{}\t'1st Quantile'\n".format(bam_file, output1)),
+		config.write("{}\t{}\t'2nd Quantile'\n".format(bam_file, output2)),
+		config.write("{}\t{}\t'3rd Quantile'\n".format(bam_file, output3)),
+		config.write("{}\t{}\t'4th Quantile'\n".format(bam_file, output4)),
 		config.close()
-		if tss:
-			command = "ngs.plot.r -C {}/{}_ngs_config.txt -G mm10 -O {}/{}_{}_tss -R tss -D ensembl -FL 300".format(outdir, conditions[key], outdir, conditions[key], date_format)
-			subprocess.Popen(command.split())
-		else:
-			command = "ngs.plot.r -C {}/{}_ngs_config.txt -G mm10 -O {}/{}_{}_genebody -R genebody -D ensembl -FL 300".format(outdir, conditions[key], outdir, conditions[key], date_format)
-			subprocess.Popen(command.split())
+		command = "ngs.plot.r -C {}/{}_ngs_config.txt -G mm10 -O {}/{}_{}_peak -R bed -D ensembl -FL 300".format(outdir, conditions[peak], outdir, conditions[peak], date_format)
+		subprocess.Popen(command.split())
+	else:
+		for key in conditions:
+			config = open(outdir+'/{}_ngs_config.txt'.format(conditions[key]), "w")
+			config.write("{}\t{}\t'1st Quantile'\n".format(key, output1)),
+			config.write("{}\t{}\t'2nd Quantile'\n".format(key, output2)),
+			config.write("{}\t{}\t'3rd Quantile'\n".format(key, output3)),
+			config.write("{}\t{}\t'4th Quantile'\n".format(key, output4)),
+			config.close()
+			if tss:
+				command = "ngs.plot.r -C {}/{}_ngs_config.txt -G mm10 -O {}/{}_{}_tss -R tss -D ensembl -FL 300".format(outdir, conditions[key], outdir, conditions[key], date_format)
+				subprocess.Popen(command.split())
+			elif gene:
+				command = "ngs.plot.r -C {}/{}_ngs_config.txt -G mm10 -O {}/{}_{}_genebody -R genebody -D ensembl -FL 300".format(outdir, conditions[key], outdir, conditions[key], date_format)
+				subprocess.Popen(command.split())
+			time.sleep(180)
 
 def ConfigSectionMap(Config, section):
 	dict1 = {}
@@ -178,6 +214,7 @@ def main():
 	gene_parser.add_argument('-o', '--outdir', help='Output directory', required=True)
 	peak_parser = subparsers.add_parser('peak', help='Peak plotter')
 	peak_parser.add_argument('-c', '--config', help='Contains [Conditions] with peak files as keys.', required=False)
+	peak_parser.add_argument('-g', '--genome', help='Options are mm10/hg19', required=False)
 	peak_parser.add_argument('-o', '--outdir', help='Output directory', required=True)
 	if len(sys.argv)==1:
 		parser.print_help()
@@ -193,9 +230,9 @@ def main():
 		rev_genes = reverse_dict(genes)
 		g_file = write_bed(genes)
 		fa_file = bedtofasta(g_file)
-		gc_content = read_fasta(fa_file, rev_genes)
+		gc_content = read_fasta(fa_file, rev_genes=rev_genes)
 		output1, output2, output3, output4 = separate_genes(gc_content, args["outdir"])
-		run_ngs(conditions, output1, output2, output3, output4, args["outdir"])
+		run_ngs(conditions, output1, output2, output3, output4, args["outdir"], gene=True)
 		#cleanup(g_file, fa_file, output1, output2, output3, output4)
 	elif args["subparser_name"] == "tss":
 		print "TSS GC analysis...\n"
@@ -203,10 +240,15 @@ def main():
 		rev_genes = reverse_dict(genes)
 		g_file = write_bed(genes, tss=True)
 		fa_file = bedtofasta(g_file)
-		gc_content = read_fasta(fa_file, rev_genes, tss=True)
+		gc_content = read_fasta(fa_file, rev_genes=rev_genes, tss=True)
 		output1, output2, output3, output4 = separate_genes(gc_content, args["outdir"])
 		run_ngs(conditions, output1, output2, output3, output4, args["outdir"], tss=True)
 		#cleanup(g_file, fa_file, output1, output2, output3, output4)
 	elif args["subparser_name"] == "peak":
-		print "TSS GC analysis...\n"
+		print "Peak GC analysis...\n"
+		for peak in conditions:
+			fa_file = bedtofasta(peak, args["genome"])
+			gc_content = read_fasta(fa_file, peak=True)
+			output1, output2, output3, output4 = separate_genes(gc_content, args["outdir"], peak=True)
+			run_ngs(conditions, output1, output2, output3, output4, args["outdir"], peak=peak)
 main()
