@@ -18,13 +18,22 @@ import tempfile
 from datetime import date
 import ConfigParser
 import time
+import socket
+
+
+socket = socket.gethostname()
 
 today = date.today()
 date_format = "{}_{}_{}".format(today.day, today.month, today.year)
 
 def get_genes(tss=False):
 	genes = {}
-	with open("/home/patrick/Scripts/pyatactools/pyatactools/data/mm10_ensembl_80.txt") as f:
+	if socket == "russia":
+		anno = "/home/USSR/pdl30/Scripts/python_snippets/mm10_ensembl_80.txt"
+	else:
+		anno = "/home/patrick/Scripts/pyatactools/pyatactools/data/mm10_ensembl_80.txt"
+	with open(anno) as f:
+
 		next(f)
 		for line in f:
 			line = line.rstrip()
@@ -62,13 +71,14 @@ def write_bed(genes, tss=False):
 	g_file.close()
 	return g_file.name
 
-def bedtofasta(g_file, genome=None):
+def bedtofasta(g_file):
 	fa_file = tempfile.NamedTemporaryFile(delete = False)
 	fa_file.close()
-	if genome == "hg19":
-		command = "fastaFromBed -fi /home/patrick/Reference_Genomes/hg19/UCSC/Chrom_fa/ucsc_hg19.fa -bed {} -fo {}".format(g_file, fa_file.name)
+	if socket == "russia":
+		fa = "/servers/bio-shares/bioinf-facility/pdl30/References/ucsc_mm10/ucsc_mm10.fa"
 	else:
-		command = "fastaFromBed -fi /home/patrick/Reference_Genomes/mm10/UCSC/Sequence/ucsc_mm10.fa -bed {} -fo {}".format(g_file, fa_file.name)
+		fa = "/home/patrick/Reference_Genomes/mm10/UCSC/Sequence/ucsc_mm10.fa"
+	command = "fastaFromBed -fi {} -bed {} -fo {}".format(fa, g_file, fa_file.name)
 	subprocess.call(command.split())
 	return fa_file.name
 
@@ -214,7 +224,7 @@ def main():
 	gene_parser.add_argument('-o', '--outdir', help='Output directory', required=True)
 	peak_parser = subparsers.add_parser('peak', help='Peak plotter')
 	peak_parser.add_argument('-c', '--config', help='Contains [Conditions] with peak files as keys.', required=False)
-	peak_parser.add_argument('-g', '--genome', help='Options are mm10/hg19', required=False)
+	#peak_parser.add_argument('-g', '--genome', help='Options are mm10/hg19', required=False)
 	peak_parser.add_argument('-o', '--outdir', help='Output directory', required=True)
 	if len(sys.argv)==1:
 		parser.print_help()
@@ -247,7 +257,7 @@ def main():
 	elif args["subparser_name"] == "peak":
 		print "Peak GC analysis...\n"
 		for peak in conditions:
-			fa_file = bedtofasta(peak, args["genome"])
+			fa_file = bedtofasta(peak)
 			gc_content = read_fasta(fa_file, peak=True)
 			output1, output2, output3, output4 = separate_genes(gc_content, args["outdir"], peak=True)
 			run_ngs(conditions, output1, output2, output3, output4, args["outdir"], peak=peak)
