@@ -13,8 +13,8 @@ import argparse
 from xlsxwriter.workbook import Workbook
 
 def convert_tsv_xls(tsv):
-	name = tsv.strip(".tsv$")
-	workbook = Workbook(name+".xls")
+	name = tsv.strip("tsv$")
+	workbook = Workbook(name+"xls")
 	worksheet = workbook.add_worksheet()
 	tsv_reader = csv.reader(open(tsv, 'rb'), delimiter='\t')
 	for row, data in enumerate(tsv_reader):

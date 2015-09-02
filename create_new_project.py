@@ -13,6 +13,7 @@ import sys, re, os
 import argparse
 from sh import touch
 import datetime
+import socket
 
 def create_dirs(idir):
 	if os.path.isdir(idir):
